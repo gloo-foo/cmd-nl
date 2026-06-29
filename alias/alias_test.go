@@ -4,8 +4,9 @@ import (
 	"slices"
 	"testing"
 
-	nl "github.com/gloo-foo/cmd-nl/alias"
 	"github.com/gloo-foo/testable"
+
+	nl "github.com/gloo-foo/cmd-nl/alias"
 )
 
 // The alias package re-exports the nl constructor and flag symbols under

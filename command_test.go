@@ -3,9 +3,10 @@ package command_test
 import (
 	"testing"
 
-	command "github.com/gloo-foo/cmd-nl"
 	"github.com/gloo-foo/testable"
 	"github.com/gloo-foo/testable/assertion"
+
+	command "github.com/gloo-foo/cmd-nl"
 )
 
 func TestNl_Basic(t *testing.T) {

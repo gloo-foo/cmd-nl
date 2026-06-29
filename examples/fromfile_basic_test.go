@@ -3,8 +3,9 @@ package nl_test
 import (
 	"fmt"
 
-	command "github.com/gloo-foo/cmd-nl"
 	"github.com/gloo-foo/testable"
+
+	command "github.com/gloo-foo/cmd-nl"
 )
 
 func ExampleNl_fromFile_basic() {

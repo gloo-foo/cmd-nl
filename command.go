@@ -21,10 +21,10 @@ const (
 type settings struct {
 	body      nlBodyFlag
 	sep       string
+	format    nlFormatFlag
 	start     int
 	increment int
 	width     int
-	format    nlFormatFlag
 }
 
 // resolve collapses the raw, partially-defaulted flags into concrete settings,

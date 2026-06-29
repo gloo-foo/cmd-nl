@@ -1,5 +1,7 @@
 package command
 
+import gloo "github.com/gloo-foo/framework"
+
 // nlBodyFlag controls which lines are numbered.
 // Maps to the -b flag: "a" (all, default), "t" (non-empty only), "n" (none).
 type nlBodyFlag string
@@ -17,7 +19,7 @@ func (f nlBodyFlag) Configure(flags *flags) { flags.body = f }
 type nlSepFlag string
 
 // NlSep creates a separator flag with the given string.
-func NlSep(s string) nlSepFlag { return nlSepFlag(s) }
+func NlSep(s string) gloo.Switch[flags] { return nlSepFlag(s) }
 
 func (f nlSepFlag) Configure(flags *flags) { flags.sep = string(f) }
 
@@ -25,7 +27,7 @@ func (f nlSepFlag) Configure(flags *flags) { flags.sep = string(f) }
 type nlStartFlag int
 
 // NlStart sets the starting line number.
-func NlStart(n int) nlStartFlag { return nlStartFlag(n) }
+func NlStart(n int) gloo.Switch[flags] { return nlStartFlag(n) }
 
 func (f nlStartFlag) Configure(flags *flags) { v := int(f); flags.start = &v }
 
@@ -33,7 +35,7 @@ func (f nlStartFlag) Configure(flags *flags) { v := int(f); flags.start = &v }
 type nlIncrementFlag int
 
 // NlIncrement sets the line number increment.
-func NlIncrement(n int) nlIncrementFlag { return nlIncrementFlag(n) }
+func NlIncrement(n int) gloo.Switch[flags] { return nlIncrementFlag(n) }
 
 func (f nlIncrementFlag) Configure(flags *flags) { v := int(f); flags.increment = &v }
 
@@ -41,7 +43,7 @@ func (f nlIncrementFlag) Configure(flags *flags) { v := int(f); flags.increment 
 type nlWidthFlag int
 
 // NlWidth sets the field width for line numbers.
-func NlWidth(n int) nlWidthFlag { return nlWidthFlag(n) }
+func NlWidth(n int) gloo.Switch[flags] { return nlWidthFlag(n) }
 
 func (f nlWidthFlag) Configure(flags *flags) { v := int(f); flags.width = &v }
 
@@ -56,7 +58,7 @@ const (
 )
 
 // NlFormat sets the line number format.
-func NlFormat(f string) nlFormatFlag { return nlFormatFlag(f) }
+func NlFormat(f string) gloo.Switch[flags] { return nlFormatFlag(f) }
 
 func (f nlFormatFlag) Configure(flags *flags) { flags.format = f }
 

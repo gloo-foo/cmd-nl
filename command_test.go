@@ -52,6 +52,16 @@ func TestNl_CustomSeparator(t *testing.T) {
 	})
 }
 
+func TestNl_UnknownOptionsIgnored(t *testing.T) {
+	// nl takes no positional arguments: values of any non-flag type are
+	// ignored and the GNU defaults still apply.
+	lines, err := testable.TestLines(command.Nl("ignored", 42, nil), "hello\n")
+	assertion.NoError(t, err)
+	assertion.Lines(t, lines, []string{
+		"     1\thello",
+	})
+}
+
 func TestNl_EmptyInput(t *testing.T) {
 	lines, err := testable.TestLines(command.Nl(), "")
 	assertion.NoError(t, err)

@@ -4,10 +4,14 @@
 //	nl.Nl(nl.BodyNonEmpty, nl.Sep(": "))
 package alias
 
-import command "github.com/gloo-foo/cmd-nl"
+import (
+	gloo "github.com/gloo-foo/framework"
 
-// Nl re-exports the constructor.
-var Nl = command.Nl
+	command "github.com/gloo-foo/cmd-nl"
+)
+
+// Nl numbers lines from stdin; see the command package for the flag set.
+func Nl(opts ...any) gloo.Command[[]byte, []byte] { return command.Nl(opts...) }
 
 // -b flag: which lines to number.
 const (
@@ -23,17 +27,17 @@ const (
 	FormatRZ = command.NlFormatRZ // right justified, leading zeros
 )
 
-// Sep creates a -s separator flag.
-var Sep = command.NlSep
+// Sep is the -s separator flag.
+type Sep = command.NlSep
 
-// Start creates a -v starting-line-number flag.
-var Start = command.NlStart
+// Start is the -v starting-line-number flag.
+type Start = command.NlStart
 
-// Increment creates a -i line-number-increment flag.
-var Increment = command.NlIncrement
+// Increment is the -i line-number-increment flag.
+type Increment = command.NlIncrement
 
-// Width creates a -w field-width flag.
-var Width = command.NlWidth
+// Width is the -w field-width flag.
+type Width = command.NlWidth
 
-// Format creates a -n number-format flag.
-var Format = command.NlFormat
+// Format is the -n number-format flag.
+type Format = command.NlFormat

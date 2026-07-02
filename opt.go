@@ -1,72 +1,78 @@
 package command
 
-import gloo "github.com/gloo-foo/framework"
-
-// nlBodyFlag controls which lines are numbered.
+// NlBody selects which lines are numbered.
 // Maps to the -b flag: "a" (all, default), "t" (non-empty only), "n" (none).
-type nlBodyFlag string
+type NlBody string
 
 const (
-	NlBodyAll      nlBodyFlag = "a"
-	NlBodyNonEmpty nlBodyFlag = "t"
-	NlBodyNone     nlBodyFlag = "n"
+	NlBodyAll      NlBody = "a"
+	NlBodyNonEmpty NlBody = "t"
+	NlBodyNone     NlBody = "n"
 )
 
-func (f nlBodyFlag) Configure(flags *flags) { flags.body = f }
-
-// nlSepFlag controls the separator between the line number and text.
+// NlSep sets the separator between the line number and the line text.
 // Maps to the -s flag. Default is "\t".
-type nlSepFlag string
+type NlSep string
 
-// NlSep creates a separator flag with the given string.
-func NlSep(s string) gloo.Switch[flags] { return nlSepFlag(s) }
+// NlStart sets the starting line number (-v flag, default 1).
+type NlStart int
 
-func (f nlSepFlag) Configure(flags *flags) { flags.sep = string(f) }
+// NlIncrement sets the line-number increment (-i flag, default 1).
+type NlIncrement int
 
-// nlStartFlag sets the starting line number (-v flag, default 1).
-type nlStartFlag int
+// NlWidth sets the field width for line numbers (-w flag, default 6).
+type NlWidth int
 
-// NlStart sets the starting line number.
-func NlStart(n int) gloo.Switch[flags] { return nlStartFlag(n) }
-
-func (f nlStartFlag) Configure(flags *flags) { v := int(f); flags.start = &v }
-
-// nlIncrementFlag sets the line number increment (-i flag, default 1).
-type nlIncrementFlag int
-
-// NlIncrement sets the line number increment.
-func NlIncrement(n int) gloo.Switch[flags] { return nlIncrementFlag(n) }
-
-func (f nlIncrementFlag) Configure(flags *flags) { v := int(f); flags.increment = &v }
-
-// nlWidthFlag sets the field width for line numbers (-w flag, default 6).
-type nlWidthFlag int
-
-// NlWidth sets the field width for line numbers.
-func NlWidth(n int) gloo.Switch[flags] { return nlWidthFlag(n) }
-
-func (f nlWidthFlag) Configure(flags *flags) { v := int(f); flags.width = &v }
-
-// nlFormatFlag sets the line number format (-n flag).
+// NlFormat sets the line-number format (-n flag).
 // Valid values: "ln" (left justified), "rn" (right justified, default), "rz" (right justified zero-padded).
-type nlFormatFlag string
+type NlFormat string
 
 const (
-	NlFormatLN nlFormatFlag = "ln"
-	NlFormatRN nlFormatFlag = "rn"
-	NlFormatRZ nlFormatFlag = "rz"
+	NlFormatLN NlFormat = "ln"
+	NlFormatRN NlFormat = "rn"
+	NlFormatRZ NlFormat = "rz"
 )
 
-// NlFormat sets the line number format.
-func NlFormat(f string) gloo.Switch[flags] { return nlFormatFlag(f) }
-
-func (f nlFormatFlag) Configure(flags *flags) { flags.format = f }
-
+// flags is the raw, partially-defaulted option set folded from an Nl call's
+// option values. The numeric fields are pointers so an explicit zero remains
+// distinguishable from "not set".
 type flags struct {
-	body      nlBodyFlag
-	sep       string
 	start     *int
 	increment *int
 	width     *int
-	format    nlFormatFlag
+	body      NlBody
+	sep       NlSep
+	format    NlFormat
+}
+
+// with folds one option value into the flag set. Values of any other type are
+// ignored: nl takes no positional arguments.
+func (f flags) with(o any) flags {
+	switch v := o.(type) {
+	case NlBody:
+		f.body = v
+	case NlSep:
+		f.sep = v
+	case NlStart:
+		n := int(v)
+		f.start = &n
+	case NlIncrement:
+		n := int(v)
+		f.increment = &n
+	case NlWidth:
+		n := int(v)
+		f.width = &n
+	case NlFormat:
+		f.format = v
+	}
+	return f
+}
+
+// fold collapses the Nl option values into the raw flag set.
+func fold(opts []any) flags {
+	var f flags
+	for _, o := range opts {
+		f = f.with(o)
+	}
+	return f
 }

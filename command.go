@@ -16,56 +16,51 @@ const (
 	defaultWidth     = 6
 )
 
+// lineNumber is a value on the line-number axis: the running counter that the
+// -v start seeds and the -i increment advances.
+type lineNumber int
+
+// numberWidth is the character width of the rendered line-number field (-w).
+type numberWidth int
+
 // settings is the fully-resolved configuration for one Nl run: every optional
 // flag has been collapsed to a concrete value.
 type settings struct {
-	body      nlBodyFlag
 	sep       string
-	format    nlFormatFlag
-	start     int
-	increment int
-	width     int
+	body      NlBody
+	format    NlFormat
+	start     lineNumber
+	increment lineNumber
+	width     numberWidth
 }
 
 // resolve collapses the raw, partially-defaulted flags into concrete settings,
 // applying each GNU nl default where the caller gave no value.
 func resolve(f flags) settings {
 	return settings{
-		body:      orBody(f.body, NlBodyAll),
-		sep:       orString(f.sep, defaultSep),
-		start:     orInt(f.start, defaultStart),
-		increment: orInt(f.increment, defaultIncrement),
-		width:     orInt(f.width, defaultWidth),
-		format:    orFormat(f.format, NlFormatRN),
+		body:      orZero(f.body, NlBodyAll),
+		sep:       string(orZero(f.sep, defaultSep)),
+		start:     lineNumber(orDefault(f.start, defaultStart)),
+		increment: lineNumber(orDefault(f.increment, defaultIncrement)),
+		width:     numberWidth(orDefault(f.width, defaultWidth)),
+		format:    orZero(f.format, NlFormatRN),
 	}
 }
 
-// orBody returns v when set, else the fallback.
-func orBody(v, fallback nlBodyFlag) nlBodyFlag {
-	if v == "" {
+// orZero returns v when set, else the fallback. The type's zero value marks
+// "not set" for flags whose zero is never a meaningful choice.
+func orZero[T comparable](v, fallback T) T {
+	var zero T
+	if v == zero {
 		return fallback
 	}
 	return v
 }
 
-// orFormat returns v when set, else the fallback.
-func orFormat(v, fallback nlFormatFlag) nlFormatFlag {
-	if v == "" {
-		return fallback
-	}
-	return v
-}
-
-// orString returns v when set, else the fallback.
-func orString(v, fallback string) string {
-	if v == "" {
-		return fallback
-	}
-	return v
-}
-
-// orInt dereferences v when set, else returns the fallback.
-func orInt(v *int, fallback int) int {
+// orDefault dereferences v when set, else returns the fallback. The numeric
+// flags mark "not set" with a nil pointer so an explicit zero stays a legal
+// value.
+func orDefault[T any](v *T, fallback T) T {
 	if v == nil {
 		return fallback
 	}
@@ -82,27 +77,30 @@ func orInt(v *int, fallback int) int {
 //   - NlWidth(n) (-w): field width for line numbers (default: 6)
 //   - NlFormat(f) / NlFormatLN / NlFormatRN / NlFormatRZ (-n): number format (default: rn)
 func Nl(opts ...any) gloo.Command[[]byte, []byte] {
-	s := resolve(gloo.NewParameters[gloo.File, flags](opts...).Flags)
+	s := resolve(fold(opts))
 	return patterns.StatefulMap(func() func([]byte) ([]byte, error) {
 		// Pre-subtract so the first increment lands exactly on start.
 		n := s.start - s.increment
 		return func(line []byte) ([]byte, error) {
-			return s.number(&n, line), nil
+			out, next := s.number(n, line)
+			n = next
+			return out, nil
 		}
 	})
 }
 
-// number renders one line. n holds the running counter (advanced in place for
-// each numbered line). Blank lines under body "t" pass through untouched.
-func (s settings) number(n *int, line []byte) []byte {
+// number renders one line against the running counter n, returning the
+// rendered line and the counter to carry to the next line (advanced only when
+// the line was numbered). Blank lines under body "t" pass through untouched.
+func (s settings) number(n lineNumber, line []byte) ([]byte, lineNumber) {
 	if s.body == NlBodyNone {
-		return s.compose(blank(s.width), line)
+		return s.compose(blank(s.width), line), n
 	}
 	if s.body == NlBodyNonEmpty && len(line) == 0 {
-		return line
+		return line, n
 	}
-	*n += s.increment
-	return s.compose(formatNumber(*n, s.width, s.format), line)
+	n += s.increment
+	return s.compose(formatNumber(n, s.width, s.format), line), n
 }
 
 // compose joins a rendered number field and the line with the separator.
@@ -111,18 +109,18 @@ func (s settings) compose(field string, line []byte) []byte {
 }
 
 // blank renders a width-wide run of spaces, used for unnumbered lines (body "n").
-func blank(width int) string {
-	return fmt.Sprintf("%*s", width, "")
+func blank(width numberWidth) string {
+	return fmt.Sprintf("%*s", int(width), "")
 }
 
 // formatNumber formats a line number according to the given format and width.
-func formatNumber(n, width int, format nlFormatFlag) string {
+func formatNumber(n lineNumber, width numberWidth, format NlFormat) string {
 	switch format {
 	case NlFormatLN:
-		return fmt.Sprintf("%-*d", width, n)
+		return fmt.Sprintf("%-*d", int(width), int(n))
 	case NlFormatRZ:
-		return fmt.Sprintf("%0*d", width, n)
+		return fmt.Sprintf("%0*d", int(width), int(n))
 	default: // NlFormatRN
-		return fmt.Sprintf("%*d", width, n)
+		return fmt.Sprintf("%*d", int(width), int(n))
 	}
 }

@@ -15,5 +15,5 @@ soft:
   - yze/invariant
 
 soft-baseline:
-  exhaustive: 2
+  exhaustive: 1
   yze/invariant: 1
